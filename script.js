@@ -1,143 +1,142 @@
-// Aguarda o carregamento completo da árvore DOM
+// Monitora a construção e prontidão da estrutura DOM
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Inicialização dos módulos do sistema
-    inicializarAcordeao();
-    inicializarAcessibilidade();
-    inicializarFormularios();
+    // Inicialização assíncrona dos módulos funcionais
+    inicializarSanfonaBeneficios();
+    inicializarEngineAcessibilidade();
+    inicializarGerenciamentoFormularios();
 });
 
 /* ==========================================================================
-   MÓDULO: ACORDEÃO INTERATIVO (Benefícios com IA)
+   MÓDULO 1: ACORDEÃO INTERATIVO (Sanfona Expandível de Recursos)
    ========================================================================== */
-function inicializarAcordeao() {
-    const botoesAcordeao = document.querySelectorAll('.acordeao-header');
+function inicializarSanfonaBeneficios() {
+    const cabecalhosAcordeao = document.querySelectorAll('.acordeao-header');
     
-    botoesAcordeao.forEach(botao => {
-        botao.addEventListener('click', () => {
-            const itemAtual = botao.parentElement;
-            const estaAtivo = itemAtual.classList.contains('ativo');
+    cabecalhosAcordeao.forEach(cabecalho => {
+        cabecalho.addEventListener('click', () => {
+            const itemSelecionado = cabecalho.parentElement;
+            const itemJaEstavaAtivo = itemSelecionado.classList.contains('ativo');
             
-            // Fecha todos os itens antes de abrir o alvo (comportamento de sanfona única)
+            // Colapsa de forma sistêmica todos os outros cards abertos
             document.querySelectorAll('.acordeao-item').forEach(item => {
                 item.classList.remove('ativo');
                 item.querySelector('.acordeao-header').setAttribute('aria-expanded', 'false');
             });
             
-            // Se não estava ativo, abre o elemento clicado
-            if (!estaAtivo) {
-                itemAtual.classList.add('ativo');
-                botao.setAttribute('aria-expanded', 'true');
+            // Abre seletivamente o item clicado se ele estava fechado
+            if (!itemJaEstavaAtivo) {
+                itemSelecionado.classList.add('ativo');
+                cabecalho.setAttribute('aria-expanded', 'true');
             }
         });
     });
 }
 
 /* ==========================================================================
-   MÓDULO: ACESSIBILIDADE ENGINE (Fontes, Dark Mode & Speech API)
+   MÓDULO 2: SISTEMA DE ACESSIBILIDADE FLUTUANTE (Fontes, Temas e Voz)
    ========================================================================== */
-function inicializarAcessibilidade() {
-    let tamanhoFonteAtual = 100; // Representa porcentagem base
-    const elementoHtml = document.documentElement;
+function inicializarEngineAcessibilidade() {
+    let escalaEscopoFonte = 100; // Porcentagem inicial
+    const noRaizHtml = document.documentElement;
     
-    // Referências do DOM do painel flutuante
-    const btnAumentar = document.getElementById('btn-aumentar');
-    const btnDiminuir = document.getElementById('btn-diminuir');
-    const btnTema = document.getElementById('btn-tema');
-    const btnFalar = document.getElementById('btn-falar');
-    const btnParar = document.getElementById('btn-parar');
+    // Captura dos elementos do painel flutuante superior direito
+    const gatilhoAumentar = document.getElementById('btn-aumentar');
+    const gatilhoDiminuir = document.getElementById('btn-diminuir');
+    const gatilhoTema = document.getElementById('btn-tema');
+    const gatilhoFalar = document.getElementById('btn-falar');
+    const gatilhoParar = document.getElementById('btn-parar');
 
-    // Controle de dimensionamento de fontes
-    btnAumentar.addEventListener('click', () => {
-        if (tamanhoFonteAtual < 140) {
-            tamanhoFonteAtual += 10;
-            elementoHtml.style.fontSize = `${tamanhoFonteAtual}%`;
+    // Funções de Escalonamento de Fontes
+    gatilhoAumentar.addEventListener('click', () => {
+        if (escalaEscopoFonte < 140) {
+            escalaEscopoFonte += 10;
+            noRaizHtml.style.fontSize = `${escalaEscopoFonte}%`;
         }
     });
 
-    btnDiminuir.addEventListener('click', () => {
-        if (tamanhoFonteAtual > 80) {
-            tamanhoFonteAtual -= 10;
-            elementoHtml.style.fontSize = `${tamanhoFonteAtual}%`;
+    gatilhoDiminuir.addEventListener('click', () => {
+        if (escalaEscopoFonte > 80) {
+            escalaEscopoFonte -= 10;
+            noRaizHtml.style.fontSize = `${escalaEscopoFonte}%`;
         }
     });
 
-    // Controle do Modo Escuro / Claro
-    btnTema.addEventListener('click', () => {
+    // Gatilho de Chaveamento de Contraste (Modo Claro / Escuro)
+    gatilhoTema.addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
     });
 
-    /* INTEGRAÇÃO COM SPEECHSYNTHESIS API (Leitura Assistida) */
-    let synthUtterance = null;
+    /* REQUISITO: TEXT-TO-SPEECH VIA SPEECHSYNTHESIS API */
+    let locucaoInstanciada = null;
 
-    btnFalar.addEventListener('click', () => {
-        // Alvo estrito: captura apenas o texto interno do container de foco da leitura
-        const areaFocoTexto = document.querySelector('.conteudo-foco');
-        if (!areaFocoTexto) return;
+    gatilhoFalar.addEventListener('click', () => {
+        const principalConteudoAlvo = document.querySelector('.conteudo-foco');
+        if (!principalConteudoAlvo) return;
 
-        // Limpeza de fluxo: extrai apenas textos de parágrafos e subtítulos, ignorando botões do acordeão
-        const blocosTexto = areaFocoTexto.querySelectorAll('p, h2, blockquote');
-        let textoCompleto = '';
+        // Captura estritamente os nós textuais sem ler componentes de interface ou botões
+        const nósDeTextoSemanticos = principalConteudoAlvo.querySelectorAll('p, h2, blockquote');
+        let compiladoTextoFinal = '';
         
-        blocosTexto.forEach(bloco => {
-            // Ignora textos contidos dentro do acordeão oculto ou de botões estruturais
-            if (!bloco.closest('.beneficios-acordeao') || bloco.closest('.acordeao-item.ativo')) {
-                textoCompleto += bloco.innerText + '. ';
+        nósDeTextoSemanticos.forEach(no => {
+            // Regra de Isolamento: Ignora o texto se pertencer a um acordeão colapsado
+            if (!no.closest('.beneficios-acordeao') || no.closest('.acordeao-item.ativo')) {
+                compiladoTextoFinal += no.innerText + '. ';
             }
         });
 
         if ('speechSynthesis' in window) {
-            // Cancela leituras anteriores ativas
+            // Zera qualquer instância residual de fala em execução no navegador
             window.speechSynthesis.cancel();
 
-            synthUtterance = new SpeechSynthesisUtterance(textoCompleto);
-            synthUtterance.lang = 'pt-BR';
-            synthUtterance.rate = 1.1; // Velocidade ideal de usabilidade
+            locucaoInstanciada = new SpeechSynthesisUtterance(compiladoTextoFinal);
+            locucaoInstanciada.lang = 'pt-BR';
+            locucaoInstanciada.rate = 1.05; // Cadência ideal de fala legível
 
-            // Eventos de estado para gerenciar os botões da interface
-            synthUtterance.onstart = () => {
-                btnFalar.disabled = true;
-                btnParar.disabled = false;
+            // Eventos do Ciclo de Vida da Síntese de Voz
+            locucaoInstanciada.onstart = () => {
+                gatilhoFalar.disabled = true;
+                gatilhoParar.disabled = false;
             };
 
-            synthUtterance.onend = () => {
-                btnFalar.disabled = false;
-                btnParar.disabled = true;
+            locucaoInstanciada.onend = () => {
+                gatilhoFalar.disabled = false;
+                gatilhoParar.disabled = true;
             };
 
-            synthUtterance.onerror = () => {
-                btnFalar.disabled = false;
-                btnParar.disabled = true;
+            locucaoInstanciada.onerror = () => {
+                gatilhoFalar.disabled = false;
+                gatilhoParar.disabled = true;
             };
 
-            window.speechSynthesis.speak(synthUtterance);
+            window.speechSynthesis.speak(locucaoInstanciada);
         } else {
-            alert('A API de conversão de voz não é suportada nativamente pelo seu navegador atual.');
+            alert('A API de leitura por voz nativa não é suportada neste navegador.');
         }
     });
 
-    btnParar.addEventListener('click', () => {
+    gatilhoParar.addEventListener('click', () => {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            btnFalar.disabled = false;
-            btnParar.disabled = true;
+            gatilhoFalar.disabled = false;
+            gatilhoParar.disabled = true;
         }
     });
 }
 
 /* ==========================================================================
-   MÓDULO: FORMULÁRIOS & GESTÃO DE INTERAÇÃO (COMENTÁRIOS E SEMINÁRIO)
+   MÓDULO 3: GESTÃO E CAPTURA DE FORMULÁRIOS & COMENTÁRIOS NATIVOS
    ========================================================================== */
-function inicializarFormularios() {
-    const formSeminario = document.getElementById('form-seminario');
-    const formComentario = document.getElementById('form-comentario');
-    const listaComentarios = document.getElementById('lista-comentarios');
+function inicializarGerenciamentoFormularios() {
+    const elementoFormSeminario = document.getElementById('form-seminario');
+    const elementoFormComentario = document.getElementById('form-comentario');
+    const containerListaComentarios = document.getElementById('lista-comentarios');
 
-    // Tratamento do Formulário de Inscrição do Seminário (Sidebar)
-    formSeminario.addEventListener('submit', (evento) => {
+    // Escuta de Inscrições do Seminário On-line (Sidebar Direita)
+    elementoFormSeminario.addEventListener('submit', (evento) => {
         evento.preventDefault();
         
-        const dadosInscricao = {
+        const pacoteInscricao = {
             nome: document.getElementById('nome').value,
             email: document.getElementById('email').value,
             cidade: document.getElementById('cidade').value,
@@ -145,37 +144,36 @@ function inicializarFormularios() {
             pais: document.getElementById('pais').value
         };
 
-        // Simulação de salvamento em console (Auxílio para Debugging assistido)
-        console.log('Inscrição no Seminário realizada com sucesso:', dadosInscricao);
-        
-        alert(`Obrigado por se inscrever, ${dadosInscricao.nome}! O link do seminário foi enviado para ${dadosInscricao.email}.`);
-        formSeminario.reset();
+        // Feedback visual e console de depuração técnica para monitoria
+        console.log('Inscrição Registrada no Banco de Dados:', pacoteInscricao);
+        alert(`Sucesso, ${pacoteInscricao.nome}! Inscrição confirmada para o seminário on-line.`);
+        elementoFormSeminario.reset();
     });
 
-    // Tratamento da Caixa de Comentários
-    formComentario.addEventListener('submit', (evento) => {
+    // Escuta e Tratamento da Área de Comentários Acessível
+    elementoFormComentario.addEventListener('submit', (evento) => {
         evento.preventDefault();
         
-        const campoTexto = document.getElementById('texto-comentario');
-        const textoInjetado = campoTexto.value.trim();
+        const inputTextoComentario = document.getElementById('texto-comentario');
+        const conteudoFormatado = inputTextoComentario.value.trim();
 
-        if (textoInjetado) {
-            // Criação do elemento de comentário estruturado de forma moderna
-            const itemComentario = document.createElement('div');
-            itemComentario.classList.add('comentario-item');
+        if (conteudoFormatado) {
+            const novoItemComentario = document.createElement('div');
+            novoItemComentario.classList.add('comentario-item');
             
-            // Injeta marcação limpa com data e hora simuladas
-            const dataAtual = new Date().toLocaleDateString('pt-BR');
-            itemComentario.innerHTML = `
-                <p><strong>Leitor Conectado</strong> <small style="color: var(--cor-texto-mutado);">• Postado em ${dataAtual}</small></p>
-                <p style="margin-top: 5px; font-size: 0.95rem;">${textoInjetado}</p>
+            const timestampAtual = new Date().toLocaleDateString('pt-BR');
+            
+            // Injeta marcação estruturada limpa e segura
+            novoItemComentario.innerHTML = `
+                <p><strong>Produtor Conectado</strong> <small style="color: var(--cor-amarelo);">• Enviado em ${timestampAtual}</small></p>
+                <p style="margin-top: 6px; font-size: 0.95rem;">${conteudoFormatado}</p>
             `;
 
-            // Insere no topo da lista de comentários
-            listaComentarios.insertBefore(itemComentario, listaComentarios.firstChild);
+            // Adiciona no topo da lista por relevância cronológica
+            containerListaComentarios.insertBefore(novoItemComentario, containerListaComentarios.firstChild);
             
-            campoTexto.value = '';
-            console.log('Novo comentário registrado no sistema.');
+            inputTextoComentario.value = '';
+            console.log('Interação com o leitor adicionada com sucesso na árvore DOM.');
         }
     });
 }
