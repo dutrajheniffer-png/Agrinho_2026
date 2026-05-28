@@ -1,179 +1,200 @@
-// Monitora a construção e prontidão da estrutura DOM
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // Inicialização assíncrona dos módulos funcionais
-    inicializarSanfonaBeneficios();
-    inicializarEngineAcessibilidade();
-    inicializarGerenciamentoFormularios();
-});
 
-/* ==========================================================================
-   MÓDULO 1: ACORDEÃO INTERATIVO (Sanfona Expandível de Recursos)
-   ========================================================================== */
-function inicializarSanfonaBeneficios() {
-    const cabecalhosAcordeao = document.querySelectorAll('.acordeao-header');
-    
-    cabecalhosAcordeao.forEach(cabecalho => {
-        cabecalho.addEventListener('click', () => {
-            const itemSelecionado = cabecalho.parentElement;
-            const itemJaEstavaAtivo = itemSelecionado.classList.contains('ativo');
-            
-            // Colapsa de forma sistêmica todos os outros cards abertos
-            document.querySelectorAll('.acordeao-item').forEach(item => {
-                item.classList.remove('ativo');
-                item.querySelector('.acordeao-header').setAttribute('aria-expanded', 'false');
+    /* ==========================================================================
+       1. CONTROLE DE INTERAÇÃO DO ACCORDION EXPANSÍVEL
+       ========================================================================== */
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const item = this.parentElement;
+            const content = this.nextElementSibling;
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+            // Fechar outros accordions ativos para limpeza visual futurista (opcional)
+            document.querySelectorAll('.accordion-item').forEach(otherItem => {
+                if (otherItem !== item && otherItem.classList.contains('active')) {
+                    otherItem.classList.remove('active');
+                    otherItem.querySelector('.accordion-header').setAttribute('aria-expanded', 'false');
+                    otherItem.querySelector('.accordion-content').setAttribute('aria-hidden', 'true');
+                }
             });
-            
-            // Abre seletivamente o item clicado se ele estava fechado
-            if (!itemJaEstavaAtivo) {
-                itemSelecionado.classList.add('ativo');
-                cabecalho.setAttribute('aria-expanded', 'true');
-            }
+
+            // Alternar estado do item clicado
+            item.classList.toggle('active');
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.setAttribute('aria-hidden', isExpanded);
         });
     });
-}
 
-/* ==========================================================================
-   MÓDULO 2: SISTEMA DE ACESSIBILIDADE FLUTUANTE (Fontes, Temas e Voz)
-   ========================================================================== */
-function inicializarEngineAcessibilidade() {
-    let escalaEscopoFonte = 100; // Porcentagem inicial
-    const noRaizHtml = document.documentElement;
-    
-    // Captura dos elementos do painel flutuante superior direito
-    const gatilhoAumentar = document.getElementById('btn-aumentar');
-    const gatilhoDiminuir = document.getElementById('btn-diminuir');
-    const gatilhoTema = document.getElementById('btn-tema');
-    const gatilhoFalar = document.getElementById('btn-falar');
-    const gatilhoParar = document.getElementById('btn-parar');
+    /* ==========================================================================
+       2. REQUISITO DE ACESSIBILIDADE: CONTROLE FLUTUANTE
+       ========================================================================== */
+    const btnMenuAcessibilidade = document.getElementById('btn-acessibilidade-menu');
+    const containerAcessibilidade = document.querySelector('.acessibilidade-container');
+    const btnAumentarFonte = document.getElementById('btn-aumentar-fonte');
+    const btnDiminuirFonte = document.getElementById('btn-diminuir-fonte');
+    const btnAlternarTema = document.getElementById('btn-alternar-tema');
+    const btnLerVoz = document.getElementById('btn-ler-voz');
+    const btnPararVoz = document.getElementById('btn-parar-voz');
 
-    // Funções de Escalonamento de Fontes
-    gatilhoAumentar.addEventListener('click', () => {
-        if (escalaEscopoFonte < 140) {
-            escalaEscopoFonte += 10;
-            noRaizHtml.style.fontSize = `${escalaEscopoFonte}%`;
+    let currentScale = 1.0;
+    const maxScale = 1.4;
+    const minScale = 0.85;
+
+    // Toggle menu flutuante
+    btnMenuAcessibilidade.addEventListener('click', () => {
+        const isActive = containerAcessibilidade.classList.toggle('active');
+        btnMenuAcessibilidade.setAttribute('aria-expanded', isActive);
+        document.getElementById('acessibilidade-opcoes').setAttribute('aria-hidden', !isActive);
+    });
+
+    // Fechar menu de acessibilidade clicando fora
+    document.addEventListener('click', (e) => {
+        if (!containerAcessibilidade.contains(e.target)) {
+            containerAcessibilidade.classList.remove('active');
+            btnMenuAcessibilidade.setAttribute('aria-expanded', 'false');
+            document.getElementById('acessibilidade-opcoes').setAttribute('aria-hidden', 'true');
         }
     });
 
-    gatilhoDiminuir.addEventListener('click', () => {
-        if (escalaEscopoFonte > 80) {
-            escalaEscopoFonte -= 10;
-            noRaizHtml.style.fontSize = `${escalaEscopoFonte}%`;
+    // Alterar escala da fonte nativa e acessível
+    btnAumentarFonte.addEventListener('click', () => {
+        if (currentScale < maxScale) {
+            currentScale += 0.08;
+            document.documentElement.style.setProperty('--font-scale', currentScale);
         }
     });
 
-    // Gatilho de Chaveamento de Contraste (Modo Claro / Escuro)
-    gatilhoTema.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
+    btnDiminuirFonte.addEventListener('click', () => {
+        if (currentScale > minScale) {
+            currentScale -= 0.08;
+            document.documentElement.style.setProperty('--font-scale', currentScale);
+        }
     });
 
-    /* REQUISITO: TEXT-TO-SPEECH VIA SPEECHSYNTHESIS API */
-    let locucaoInstanciada = null;
+    // Alternador de Tema Escuro / Claro
+    btnAlternarTema.addEventListener('click', () => {
+        const isLight = document.body.classList.toggle('light-theme');
+        btnAlternarTema.textContent = isLight ? 'Modo Escuro' : 'Modo Claro';
+    });
 
-    gatilhoFalar.addEventListener('click', () => {
-        const principalConteudoAlvo = document.querySelector('.conteudo-foco');
-        if (!principalConteudoAlvo) return;
+    /* ==========================================================================
+       3. SPEECH SYNTHESIS API (LEITURA POR VOZ ACESSÍVEL)
+       ========================================================================== */
+    let synth = window.speechSynthesis;
+    let utterance = null;
 
-        // Captura estritamente os nós textuais sem ler componentes de interface ou botões
-        const nósDeTextoSemanticos = principalConteudoAlvo.querySelectorAll('p, h2, blockquote');
-        let compiladoTextoFinal = '';
+    btnLerVoz.addEventListener('click', () => {
+        // Se já estiver falando, para antes de reiniciar
+        if (synth.speaking) {
+            synth.cancel();
+        }
+
+        // Seleciona exclusivamente o conteúdo textual principal, omitindo menus e botões
+        const conteudoPrincipal = document.getElementById('conteudo-principal');
         
-        nósDeTextoSemanticos.forEach(no => {
-            // Regra de Isolamento: Ignora o texto se pertencer a um acordeão colapsado
-            if (!no.closest('.beneficios-acordeao') || no.closest('.acordeao-item.ativo')) {
-                compiladoTextoFinal += no.innerText + '. ';
-            }
-        });
-
-        if ('speechSynthesis' in window) {
-            // Zera qualquer instância residual de fala em execução no navegador
-            window.speechSynthesis.cancel();
-
-            locucaoInstanciada = new SpeechSynthesisUtterance(compiladoTextoFinal);
-            locucaoInstanciada.lang = 'pt-BR';
-            locucaoInstanciada.rate = 1.05; // Cadência ideal de fala legível
-
-            // Eventos do Ciclo de Vida da Síntese de Voz
-            locucaoInstanciada.onstart = () => {
-                gatilhoFalar.disabled = true;
-                gatilhoParar.disabled = false;
-            };
-
-            locucaoInstanciada.onend = () => {
-                gatilhoFalar.disabled = false;
-                gatilhoParar.disabled = true;
-            };
-
-            locucaoInstanciada.onerror = () => {
-                gatilhoFalar.disabled = false;
-                gatilhoParar.disabled = true;
-            };
-
-            window.speechSynthesis.speak(locucaoInstanciada);
-        } else {
-            alert('A API de leitura por voz nativa não é suportada neste navegador.');
-        }
-    });
-
-    gatilhoParar.addEventListener('click', () => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            gatilhoFalar.disabled = false;
-            gatilhoParar.disabled = true;
-        }
-    });
-}
-
-/* ==========================================================================
-   MÓDULO 3: GESTÃO E CAPTURA DE FORMULÁRIOS & COMENTÁRIOS NATIVOS
-   ========================================================================== */
-function inicializarGerenciamentoFormularios() {
-    const elementoFormSeminario = document.getElementById('form-seminario');
-    const elementoFormComentario = document.getElementById('form-comentario');
-    const containerListaComentarios = document.getElementById('lista-comentarios');
-
-    // Escuta de Inscrições do Seminário On-line (Sidebar Direita)
-    elementoFormSeminario.addEventListener('submit', (evento) => {
-        evento.preventDefault();
+        // Clona o nó para extrair texto de forma limpa sem destruir a interface
+        const clone = conteudoPrincipal.cloneNode(true);
         
-        const pacoteInscricao = {
-            nome: document.getElementById('nome').value,
-            email: document.getElementById('email').value,
-            cidade: document.getElementById('cidade').value,
-            estado: document.getElementById('estado').value,
-            pais: document.getElementById('pais').value
-        };
+        // Remove elementos indesejados na leitura (Botões, formulários, comentários)
+        const elementosIgnorados = clone.querySelectorAll('button, form, aside, .comments-section, script, style');
+        elementosIgnorados.forEach(el => el.remove());
 
-        // Feedback visual e console de depuração técnica para monitoria
-        console.log('Inscrição Registrada no Banco de Dados:', pacoteInscricao);
-        alert(`Sucesso, ${pacoteInscricao.nome}! Inscrição confirmada para o seminário on-line.`);
-        elementoFormSeminario.reset();
-    });
+        const textoParaLer = clone.innerText.trim();
 
-    // Escuta e Tratamento da Área de Comentários Acessível
-    elementoFormComentario.addEventListener('submit', (evento) => {
-        evento.preventDefault();
-        
-        const inputTextoComentario = document.getElementById('texto-comentario');
-        const conteudoFormatado = inputTextoComentario.value.trim();
-
-        if (conteudoFormatado) {
-            const novoItemComentario = document.createElement('div');
-            novoItemComentario.classList.add('comentario-item');
+        if (textoParaLer) {
+            utterance = new SpeechSynthesisUtterance(textoParaLer);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.0;
             
-            const timestampAtual = new Date().toLocaleDateString('pt-BR');
+            // Alteração visual indicativa durante áudio ativo
+            btnLerVoz.style.backgroundColor = 'var(--cor-amarelo-tech)';
             
-            // Injeta marcação estruturada limpa e segura
-            novoItemComentario.innerHTML = `
-                <p><strong>Produtor Conectado</strong> <small style="color: var(--cor-amarelo);">• Enviado em ${timestampAtual}</small></p>
-                <p style="margin-top: 6px; font-size: 0.95rem;">${conteudoFormatado}</p>
+            utterance.onend = () => {
+                btnLerVoz.style.backgroundColor = '';
+            };
+            
+            utterance.onerror = () => {
+                btnLerVoz.style.backgroundColor = '';
+            };
+
+            synth.speak(utterance);
+        }
+    });
+
+    btnPararVoz.addEventListener('click', () => {
+        if (synth.speaking) {
+            synth.cancel();
+            btnLerVoz.style.backgroundColor = '';
+        }
+    });
+
+    /* ==========================================================================
+       4. INTERATIVIDADE E VALIDAÇÃO DE FORMULÁRIO DE INSCRIÇÃO
+       ========================================================================== */
+    const cadastroForm = document.getElementById('cadastro-seminario');
+    const formFeedback = document.getElementById('form-feedback');
+
+    cadastroForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        // Simulação de requisição AJAX API corporativa
+        btnForm = cadastroForm.querySelector('.btn-form-submit');
+        const originalText = btnForm.textContent;
+        btnForm.textContent = 'Processando Registro...';
+        btnForm.disabled = true;
+
+        setTimeout(() => {
+            btnForm.textContent = originalText;
+            btnForm.disabled = false;
+            formFeedback.style.display = 'block';
+            cadastroForm.reset();
+            
+            // Oculta feedback após 6 segundos automaticamente
+            setTimeout(() => {
+                formFeedback.style.display = 'none';
+            }, 6000);
+        }, 1200);
+    });
+
+    /* ==========================================================================
+       5. SESSÃO DE INTERAÇÃO DO LEITOR (SISTEMA DINÂMICO DE COMENTÁRIOS)
+       ========================================================================== */
+    const commentForm = document.getElementById('comment-form');
+    const commentsList = document.getElementById('comments-list');
+
+    commentForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const txtComentario = document.getElementById('txt-comentario');
+        const texto = txtComentario.value.trim();
+
+        if (texto) {
+            const novoComentario = document.createElement('div');
+            novoComentario.className = 'comment-item';
+            
+            // Estruturação semântica do novo comentário inserido em tempo de execução
+            novoComentario.innerHTML = `
+                <div class="comment-meta"><strong>Leitor Conectado</strong> &bull; Agora mesmo</div>
+                <div class="comment-body">${escapeHTML(texto)}</div>
             `;
-
-            // Adiciona no topo da lista por relevância cronológica
-            containerListaComentarios.insertBefore(novoItemComentario, containerListaComentarios.firstChild);
             
-            inputTextoComentario.value = '';
-            console.log('Interação com o leitor adicionada com sucesso na árvore DOM.');
+            // Insere no topo da lista de comentários
+            commentsList.insertBefore(novoComentario, commentsList.firstChild);
+            txtComentario.value = '';
         }
     });
-}
+
+    // Função utilitária de sanitização básica contra ataques XSS injetados via formulário
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+});
